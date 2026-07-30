@@ -166,7 +166,7 @@ The gap between Local-transfer and Oracle-local is the number that matters: it i
 - **Loss**: MSE + pinball loss for quantiles
 - **Precipitation handling**: Two-stage (occurrence classifier + amount regressor) or transformed target (log1p)
 - **Augmentation**: Random station dropout to simulate sparser networks
-- **Calibration set**: 2019 held out for conformal calibration
+- **Calibration set**: 2019, disjoint from training (see §4.1 split) — required by split conformal's exchangeability assumption (Angelopoulos & Bates 2021; Vovk et al. 2005), not a design choice
 
 ### INSIGHT-3 (Revised 2026-07)
 Architecture is not the contribution—evaluation protocol + uncertainty calibration is. Local vs. global calibration by itself is **not** novel (LSCP, Cluster-Aware DeepKriging already show it — see `LITERATURE.md` §9). What's novel: using local/global calibration as a diagnostic for whether conformal coverage survives spatial transfer, extreme events, and density shift — a transfer question neither prior paper asks — plus a classical-vs-conformal (kriging variance vs. CQR) UQ comparison neither makes.
@@ -181,7 +181,7 @@ Architecture is not the contribution—evaluation protocol + uncertainty calibra
   - Precipitation: ~5000 stations (more variable coverage)
 - **Target**: ERA5 0.25° reanalysis, matched variables/times
 - **Region**: Europe (well-observed, diverse climate zones)
-- **Period**: 2010–2019 train, 2020 val, 2021 test
+- **Period**: 2010–2018 train, 2019 conformal calibration (disjoint from train), 2020 val, 2021 test
 
 ### 4.2 Baselines
 
@@ -338,3 +338,5 @@ Both positive and negative results are publishable:
 - **INSIGHT-5**: Both positive and negative results are publishable at workshops
 - **INSIGHT-6**: Kriging as baseline differentiates from prior neural-only work
 - **INSIGHT-7**: Coverage degradation is more actionable than RMSE degradation—tells practitioners when not to trust the model
+- **INSIGHT-10 (2026-07)**: Original split ("train 2010–2019 + calibrate on 2019") had train/calibration overlap, invalidating split conformal's exchangeability assumption (Angelopoulos & Bates 2021; Vovk et al. 2005). Fixed: train 2010–2018, calibrate 2019 (disjoint), val 2020, test 2021. A contiguous calibration year despite temporal dependence is citably defensible (Oliveira et al., JMLR 2024, benchmarks split CP as competitive on real spatiotemporal climate data; theory in arXiv:2510.02471 bounds coverage loss via mixing coefficients) rather than requiring an exchangeability claim we can't support. If calibration-year coverage looks unstable in results, cite NexCP (Barber et al. 2023) as the known remedy — not implemented, just cited.
+- **INSIGHT-11 (2026-07)**: Considered extending the study period through 2023 to match/exceed prior work's recency or to capture the more extreme 2022 European heatwave. Decided against: this is an evaluation/diagnosis paper that reruns its own baselines rather than citing prior work's reported numbers, so matching their exact years buys nothing scientifically. 2021 already provides a usable heatwave (June) + cold snap (Feb) for OOD-Extreme. Extending would cost real data-engineering time against a 5-week/Aug 29 deadline and add QC risk from less-settled near-present ECA&D data, on top of the pandemic-era reporting anomalies 2020 (val year) already carries. Keeping 2010–2021 preserves budget for the actual contribution (the OOD splits).
