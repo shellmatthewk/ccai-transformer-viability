@@ -1,8 +1,8 @@
 # Chapter Plan: When Does Learned Station-to-Grid Reconstruction Fail?
 
-**Venue**: CCAI Workshop (NeurIPS 2026)
+**Venue**: CCAI Workshop (NeurIPS 2026?2027?)
 **Format**: 4-page paper
-**Deadline**: August 29, 2025 AoE
+**Deadline**: August 29, 2026 AoE
 **Team**: 2 NERDS 
 
 ---
@@ -85,14 +85,18 @@ Gap statement: prior work handles irregular inputs well but **evaluation is limi
 
 ### Positioning Table
 
-| Paper | Spatial OOD | Extreme Events | Kriging Baseline |
-|-------|-------------|----------------|------------------|
-| Swin-TNP | Random 20% holdout | No | No |
-| Aardvark | Not reported | Not reported | No |
-| ADAF | Sparse sensitivity | Tropical cyclones | No |
-| Manshausen | Left-out stations | No | No |
-| ConvCNP/DeepSensor | Varies | No | Sometimes |
-| **Ours** | Train West → Test East | Heatwave/cold snap splits | **Yes** |
+| Paper | Spatial OOD | Extreme Events | Kriging Baseline | Local/Regional Conformal UQ |
+|-------|-------------|----------------|------------------|------------------------------|
+| Swin-TNP | Random 20% holdout | No | No | No |
+| Aardvark | Not reported | Not reported | No | No |
+| ADAF | Sparse sensitivity | Tropical cyclones | No | No |
+| Manshausen | Left-out stations | No | No | No |
+| ConvCNP/DeepSensor | Varies | No | Sometimes | No |
+| LSCP (Jiang & Xie, ICML 2026) | No (within-domain locality only) | No | No | Yes, but not under region transfer |
+| Cluster-Aware DeepKriging (Kim et al. 2026) | No (spatial clusters, same domain) | No | No | Yes, incl. global fallback for sparse clusters — but not under region transfer |
+| **Ours** | Train West → Test East | Heatwave/cold snap splits | **Yes** | Calibration-*transfer* test: does calibration fit on one region/period survive deployment on a shifted one? |
+
+**Note (see `LITERATURE.md` §9)**: LSCP and the cluster-aware DeepKriging paper already show local beats global calibration *within* a domain — that specific claim is no longer novel. Our angle is calibration validity under distribution shift (spatial, extreme, density), which neither tests.
 
 ---
 
@@ -138,14 +142,25 @@ We use a standard set-transformer encoder + cross-attention decoder, similar to 
 3. Find threshold Q̂ = (1-α)(1 + 1/n)-quantile of scores
 4. Predict: [q_low - Q̂, q_high + Q̂]
 
-### 3.4 Local vs. Global Conformal Calibration (KEY ABLATION)
+### 3.4 Conformal Calibration Under Distribution Shift (KEY ABLATION, reframed)
 
-| Strategy | Description | Hypothesis |
-|----------|-------------|------------|
-| **Global** | Single Q̂ for all of Europe | Simple but ignores spatial heterogeneity |
-| **Local** | Separate Q̂_west, Q̂_central, Q̂_east | Should improve coverage in heterogeneous regions |
+**Caveat (see `LITERATURE.md` §9)**: "Local calibration beats global" is already shown by LSCP (Jiang & Xie, ICML 2026) and the cluster-aware DeepKriging paper (Kim et al. 2026) — including the same global-fallback-for-sparse-regions idea we'd have used for the East region. That specific claim is not our contribution. What neither paper tests is whether a calibration fit — local or global — **survives being deployed outside the domain it was calibrated on**. That's the question this ablation now answers.
 
-**Why this matters**: Climate fields are spatially heterogeneous (coastal vs. continental, mountains vs. plains). Global calibration may be too loose in easy regions and too tight in hard regions.
+**Design — three arms, not two**:
+
+| Arm | Calibration set | Deployed on | Purpose |
+|-----|-----------------|-------------|---------|
+| **Global** | All of Europe, 2019 | ID + all OOD splits | Baseline: single Q̂, ignores region and shift |
+| **Local-transfer** | West Europe only, 2019 | East Europe (OOD-Spatial), extreme periods (OOD-Extreme) | Realistic deployment: calibration was never possible in the target region/period |
+| **Oracle-local** | East Europe, 2019 (or extreme-period analogue) | Same region/period it was calibrated on | Undeployable upper bound — shows how much coverage loss is attributable to *transfer* specifically vs. residual model error |
+
+The gap between Local-transfer and Oracle-local is the number that matters: it isolates "coverage lost to calibration-transfer" from "coverage lost to the model just being wrong OOD."
+
+**Second axis — calibration validity under density shift**: OOD-Sparse (§4.3) drops 50%/75% of stations at test time. Split conformal's exchangeability assumption is violated not just by region/period shift but by observation-density shift too — the residual distribution calibration was fit on (dense 2019 network) differs from the one it's applied to (sparse test network). Re-run the Global/Local-transfer/Oracle-local comparison under OOD-Sparse as a third, orthogonal stress test (spatial × temporal-extreme × density).
+
+**Third comparison — classical vs. conformal UQ**: Kriging produces variance estimates natively from the variogram (no conformal step needed). Compare (a) raw kriging variance intervals, (b) conformalized kriging (kriging point prediction + CQR-style calibration), and (c) the transformer's CQR intervals, across all three shift axes. No cited conformal-weather paper (Camps-Valls et al., the neural-operator/PINN conformal papers) makes this classical-vs-conformal comparison — they're neural-only.
+
+**Why this matters**: Climate fields are spatially heterogeneous (coastal vs. continental, mountains vs. plains), and climate applications need to know not just "is this method locally well-calibrated" but "can I trust calibration done somewhere else when I deploy here."
 
 ### 3.5 Training Details
 - **Loss**: MSE + pinball loss for quantiles
@@ -153,8 +168,8 @@ We use a standard set-transformer encoder + cross-attention decoder, similar to 
 - **Augmentation**: Random station dropout to simulate sparser networks
 - **Calibration set**: 2019 held out for conformal calibration
 
-### INSIGHT-3
-Architecture is not the contribution—evaluation protocol + uncertainty calibration is. Local vs. global calibration is a novel ablation.
+### INSIGHT-3 (Revised 2026-07)
+Architecture is not the contribution—evaluation protocol + uncertainty calibration is. Local vs. global calibration by itself is **not** novel (LSCP, Cluster-Aware DeepKriging already show it — see `LITERATURE.md` §9). What's novel: using local/global calibration as a diagnostic for whether conformal coverage survives spatial transfer, extreme events, and density shift — a transfer question neither prior paper asks — plus a classical-vs-conformal (kriging variance vs. CQR) UQ comparison neither makes.
 
 ---
 
@@ -185,7 +200,7 @@ Architecture is not the contribution—evaluation protocol + uncertainty calibra
 | **ID** | Random held-out days in 2021 | Standard; all methods should perform well here |
 | **OOD-Spatial** | Train Western Europe (lon < 10°E) → Test Eastern Europe (lon > 15°E) | Systematic geographic transfer; gap region ensures no spatial leakage |
 | **OOD-Extreme** | Held-out heatwave (June 2021) and cold snap (Feb 2021) periods | Extreme events are where climate applications need reliability most |
-| **OOD-Sparse** | Ablation: drop 50%, 75% of training stations | Tests robustness to data-sparse conditions |
+| **OOD-Sparse** | Ablation: drop 50%, 75% of training stations | Tests robustness to data-sparse conditions; also a density-shift stress test for conformal calibration validity (§3.4) |
 
 ### 4.4 Metrics
 
@@ -223,16 +238,19 @@ OOD-spatial split speaks to CCAI relevance: data-sparse regions (Africa, oceans)
 - **Figure**: Performance on extreme percentiles (top 5% hottest days, coldest days) vs. normal days
 - **Table**: Degradation ratio by method × split
 
-### 5.3 Local vs. Global Conformal Calibration (KEY ABLATION)
+### 5.3 Conformal Calibration Under Distribution Shift (KEY ABLATION, reframed)
 
-| Calibration | ID Coverage | OOD-Spatial Coverage | OOD-Extreme Coverage |
-|-------------|-------------|---------------------|---------------------|
-| Global | 90% (by construction) | —% | —% |
-| Local | 90% (by construction) | —% (expect better) | —% |
+| Arm | ID Coverage | OOD-Spatial Coverage | OOD-Extreme Coverage | OOD-Sparse Coverage |
+|-----|-------------|---------------------|---------------------|----------------------|
+| Global | 90% (by construction) | —% | —% | —% |
+| Local-transfer | 90% (by construction) | —% | —% | —% |
+| Oracle-local (upper bound) | 90% (by construction) | —% | —% | —% |
 
-**Hypothesis**: Local calibration should maintain better coverage OOD because it accounts for regional climate heterogeneity.
+**Hypothesis**: Global and Local-transfer both lose coverage OOD relative to Oracle-local; the size of that gap quantifies coverage loss attributable to calibration-transfer specifically (as opposed to model error).
 
-**Figure**: Coverage map of Europe showing where global calibration fails (coverage < 85%) but local calibration succeeds.
+**Classical vs. conformal UQ**: separate table comparing raw kriging variance intervals, conformalized kriging, and transformer CQR across the same shift axes.
+
+**Figure**: Coverage map of Europe showing where Global calibration fails (coverage < 85%) but Local-transfer/Oracle-local succeed — annotated with the transfer gap.
 
 ### 5.4 Attention Analysis (If Space Permits)
 - Do attention weights decay with distance? Does this break down OOD?
@@ -313,7 +331,9 @@ Both positive and negative results are publishable:
 
 - **INSIGHT-1**: Frame as evaluation + UQ contribution, not architecture contribution
 - **INSIGHT-2**: Prior work handles irregular inputs; evaluation + uncertainty calibration is the gap
-- **INSIGHT-3**: Local vs. global conformal is a novel, low-cost ablation with clear hypothesis
+- **INSIGHT-3 (Revised)**: Local vs. global conformal is NOT novel on its own (LSCP, Cluster-Aware DeepKriging pre-empt it); reframed as a calibration-*transfer* diagnostic (Global/Local-transfer/Oracle-local) plus classical-vs-conformal UQ comparison — neither prior paper tests either
+- **INSIGHT-8**: OOD-Sparse doubles as a density-shift stress test for conformal validity, not just an RMSE robustness ablation
+- **INSIGHT-9**: Point-accuracy degradation (RMSE) and calibration degradation (coverage) should be reported jointly — a model can hold RMSE steady while coverage collapses, or vice versa, under transfer
 - **INSIGHT-4**: OOD-spatial connects to climate justice (data-sparse regions)
 - **INSIGHT-5**: Both positive and negative results are publishable at workshops
 - **INSIGHT-6**: Kriging as baseline differentiates from prior neural-only work

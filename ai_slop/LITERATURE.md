@@ -334,6 +334,52 @@ Extends conformal prediction to neural operators (FNO, DeepONet) for physics sim
 
 ---
 
+## 9. Local/Regional Conformal Calibration — Competing Work (Novelty Check, added 2026-07)
+
+**Why this section exists**: Our Chapter 3.4 ablation (local vs. global conformal calibration) is close to published work. This section documents exactly how, so the paper can be positioned as a diagnostic contribution (calibration behavior under OOD shift) rather than a methodological one (local calibration itself).
+
+### 9.1 LSCP: Localized Spatial Conformal Prediction
+
+**Citation**: Jiang, H., & Xie, Y. (2024). Spatial conformal inference through localized quantile regression. *arXiv preprint arXiv:2412.01098*. (ICML 2026 poster.)
+
+**Links**: [arXiv](https://arxiv.org/abs/2412.01098) · [OpenReview](https://openreview.net/forum?id=CwhODlpFuq) · [ICML 2026](https://icml.cc/virtual/2026/poster/64211)
+
+**Summary**: Model-agnostic framework coupling local quantile regression with conformal calibration for spatial data. Retains finite-sample marginal coverage under exchangeability; under stationarity + spatial mixing, attains asymptotic *conditional* coverage. Framework extends to spatio-temporal settings.
+
+**Overlap with our 3.4 ablation**: Directly demonstrates that local/regional calibration improves conditional coverage over a global baseline — the same qualitative claim as our "local beats global" hypothesis.
+
+**What it does NOT test**: Calibration fit on one spatial region and deployed on a disjoint, systematically different region (train/calibrate West → test East). LSCP's locality is conditioning on neighborhoods *within* an otherwise-exchangeable domain, not transfer across a distribution shift boundary. No extreme-event or station-density-shift stress test either.
+
+### 9.2 Cluster-Aware Conformal Calibration for Spatio-Temporal Prediction
+
+**Citation**: Kim, G., Lim, C. Y., Wang, W.-T., Huang, H.-Y., & Wu, W.-Y. (2026). Cluster-aware conformal calibration for spatio-temporal distributional prediction. *arXiv preprint arXiv:2606.06753*.
+
+**Link**: [arXiv](https://arxiv.org/abs/2606.06753)
+
+**Summary**: DeepKriging-style extension with cluster-adaptive spatial bases and cluster-aware conformal calibration — determines interval widths within spatial clusters, with a **global fallback when calibration samples in a cluster are insufficient**. Demonstrates improved coverage/tail reliability vs. a global conformal baseline on simulation + PM2.5 data.
+
+**Overlap with our 3.4 ablation**: Near-identical high-level design to our global/local split, including the exact "fall back to global when the local calibration set is too small" concern we'd flagged for the East region.
+
+**What it does NOT test**: Clusters are carved out of the training/calibration domain's own spatial pattern (non-uniform sampling), not a held-out region unseen during calibration. No systematic geographic-transfer test, no extreme-event split, no comparison against a classical (kriging-variance) UQ baseline.
+
+**Gap for our paper**: Both 9.1 and 9.2 establish that local calibration helps *within* the calibration domain. Neither asks whether locally- or globally-fit calibration **survives being applied out-of-region** — i.e., whether the conformal guarantee itself transfers under the same spatial/temporal/density shifts the rest of the paper is built around. That transfer question, not "does local beat global," is what our ablation should be framed as answering.
+
+### 9.3 Theoretical Foundations: Split CP Under Non-Exchangeability
+
+**NexCP** — Barber, R. F., Candès, E. J., Ramdas, A., & Tibshirani, R. J. (2023). Conformal prediction beyond exchangeability. *Annals of Statistics*, 51(2), 816–845.
+[arXiv](https://arxiv.org/abs/2202.13415) · [Annals of Statistics](https://projecteuclid.org/journals/annals-of-statistics/volume-51/issue-2/Conformal-prediction-beyond-exchangeability/10.1214/23-AOS2276.full)
+Reweights nonconformity scores by a fixed, data-independent weight so that observations believed to share the test distribution count more. Under exchangeability, recovers standard split-CP guarantees; under violation, the coverage gap is governed by the total-variation distance between swapped score vectors. **Relevance**: the standard remedy to cite if our coverage results show meaningful drift under spatial/temporal shift — one sentence noting NexCP as the known fix, without implementing it.
+
+**Gibbs & Candès (2024)** — Gibbs, I., & Candès, E. (2024). Conformal inference for online prediction with arbitrary distribution shifts. *Journal of Machine Learning Research*, 25(162), 1–36.
+[JMLR](https://jmlr.org/papers/v25/22-1218.html)
+Online conformal variant guaranteeing coverage on average over a stream under arbitrary (possibly discontinuous) distribution shift — weaker than pointwise coverage but requires no stationarity assumption. **Relevance**: alternative remedy to NexCP for the discussion section; note that our setting (fixed train/calibrate/test splits) is closer to Barber et al.'s framing than to this online setting.
+
+**Oliveira, Orenstein, Ramos & Romano (2024)** — Split conformal prediction and non-exchangeable data. *Journal of Machine Learning Research*, 25, article 23-1553. Preprint: *arXiv:2203.15885*.
+[JMLR](https://jmlr.org/papers/v25/23-1553.html) · [arXiv](https://arxiv.org/abs/2203.15885)
+Concentration-inequality framework showing split CP remains valid for many non-exchangeable processes with a bounded coverage penalty tied to how strongly the process departs from exchangeability (mixing-type dependence measures). Empirically benchmarks split CP against distribution-shift-aware alternatives on **real spatiotemporal climate data**, finding standard split CP competitive on coverage/interval size while being far simpler and faster. **Relevance**: direct literature support for using a contiguous calibration year (2019) rather than a scattered/randomized calibration sample — the disjointness requirement is non-negotiable, but the specific contiguous-year design is now citable rather than just asserted.
+
+---
+
 ## Cross-Paper Synthesis
 
 ### What Prior Work Does Well
@@ -359,6 +405,8 @@ Extends conformal prediction to neural operators (FNO, DeepONet) for physics sim
 **Identify the gap precisely**: "However, systematic evaluation of out-of-distribution performance—crucial for climate applications in data-sparse regions and during extreme events—remains limited."
 
 **State our contribution clearly**: "We provide a controlled study of when these methods fail, using spatial transfer, extreme event splits, and classical baselines absent from prior work."
+
+**Calibration claim, revised (2026-07)**: Do NOT frame local-vs-global conformal calibration as a novel method — see §9. LSCP (Jiang & Xie, ICML 2026) and the cluster-aware DeepKriging paper (Kim et al. 2026) both already show local calibration beats global within a domain, including the same global-fallback-for-sparse-regions design we'd planned for the East region. Frame instead as: "we use known local-calibration machinery to diagnose whether conformal coverage *itself* survives the spatial/extreme/sparsity distribution shifts central to this paper — a transfer question neither prior work asks." Cite Oliveira et al. (2024) for why a contiguous calibration year is defensible despite temporal dependence, and Barber et al. (2023, NexCP) as the one-sentence remedy if coverage drifts.
 
 ---
 
@@ -438,6 +486,52 @@ Extends conformal prediction to neural operators (FNO, DeepONet) for physics sim
   author={TBD},
   journal={arXiv preprint arXiv:2606.09923},
   year={2024}
+}
+
+@article{jiang2024lscp,
+  title={Spatial Conformal Inference through Localized Quantile Regression},
+  author={Jiang, Hanyang and Xie, Yao},
+  journal={arXiv preprint arXiv:2412.01098},
+  note={ICML 2026 poster},
+  year={2024}
+}
+
+@article{kim2026clusteraware,
+  title={Cluster-Aware Conformal Calibration for Spatio-Temporal Distributional Prediction},
+  author={Kim, Gooyoung and Lim, Chae Young and Wang, Wen-Ting and Huang, Hao-Yun and Wu, Wei-Ying},
+  journal={arXiv preprint arXiv:2606.06753},
+  year={2026}
+}
+
+@article{barber2023nexcp,
+  title={Conformal Prediction Beyond Exchangeability},
+  author={Barber, Rina Foygel and Cand{\`e}s, Emmanuel J and Ramdas, Aaditya and Tibshirani, Ryan J},
+  journal={Annals of Statistics},
+  volume={51},
+  number={2},
+  pages={816--845},
+  year={2023},
+  note={arXiv:2202.13415}
+}
+
+@article{gibbs2024online,
+  title={Conformal Inference for Online Prediction with Arbitrary Distribution Shifts},
+  author={Gibbs, Isaac and Cand{\`e}s, Emmanuel},
+  journal={Journal of Machine Learning Research},
+  volume={25},
+  number={162},
+  pages={1--36},
+  year={2024}
+}
+
+@article{oliveira2024nonexchangeable,
+  title={Split Conformal Prediction and Non-Exchangeable Data},
+  author={Oliveira, R. and Orenstein, P. and Ramos, T. and Romano, J. V.},
+  journal={Journal of Machine Learning Research},
+  volume={25},
+  number={23-1553},
+  year={2024},
+  note={arXiv:2203.15885 — first names not independently verified, confirm before camera-ready}
 }
 ```
 
