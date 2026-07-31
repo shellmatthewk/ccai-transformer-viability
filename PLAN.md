@@ -34,3 +34,28 @@ There is a method called Kriging - which is a stats method from the 1950's? that
 ## Additional Spins/Questions 
 
 Will it work with half the stations in Europe then tested on the other half?
+
+## Timeline
+
+**August 2nd: GitHub setup & literature review**
+
+-Work on notebooks-
+
+**August 8th: Input data pre-processed - Kriging algorithm experiment setup - Neural network experiment setup**
+
+-In between we do checks-
+
+**August 11th: Experiment run**
+
+-Formulate research questions-
+
+**August 13th: Writing begins**
+
+-Write the damn thing-
+
+**August 22nd: Writing is done**
+
+-Paper Revision-
+
+**August 28th: Submission**
+
