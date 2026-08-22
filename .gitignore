@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local climate datasets and derived targets
+data/
+processed/
+
+# Model checkpoints, experiment runs, and generated summaries
+checkpoints/
+experiments/
+experiments_*/
+final_results/
+final_results_*/
+
+# Generated local metadata
+dataset_stats.json
+experiment_manifest.json

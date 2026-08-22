@@ -1,0 +1,13 @@
+@echo off
+cd /d "%~dp0.."
+if not exist "experiments\global\transformer\best.pt" (
+  echo Missing final experiment checkpoints. Run global and source training first.
+  exit /b 1
+)
+if not exist "experiments\source\transformer\best.pt" (
+  echo Missing source experiment checkpoints. Run source training first.
+  exit /b 1
+)
+start "Evaluate Transformer - RTX 4080" cmd /k "set CUDA_VISIBLE_DEVICES=0&& .venv\Scripts\python.exe evaluate_experiment.py --checkpoint experiments/global/transformer/best.pt --calibration-region global --test-region global --calibration-label global --device cuda --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output experiments/results/transformer_global_sparse.csv && .venv\Scripts\python.exe evaluate_experiment.py --checkpoint experiments/source/transformer/best.pt --calibration-region source --test-region target --calibration-label transferred --device cuda --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output experiments/results/transformer_transfer_sparse.csv && .venv\Scripts\python.exe evaluate_experiment.py --checkpoint experiments/source/transformer/best.pt --calibration-region target --test-region target --calibration-label oracle_target --device cuda --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output experiments/results/transformer_oracle_sparse.csv"
+start "Evaluate ConvCNP - RTX 5060 Ti" cmd /k "set CUDA_VISIBLE_DEVICES=1&& .venv\Scripts\python.exe evaluate_experiment.py --checkpoint experiments/global/convcnp/best.pt --calibration-region global --test-region global --calibration-label global --device cuda --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output experiments/results/convcnp_global_sparse.csv && .venv\Scripts\python.exe evaluate_experiment.py --checkpoint experiments/source/convcnp/best.pt --calibration-region source --test-region target --calibration-label transferred --device cuda --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output experiments/results/convcnp_transfer_sparse.csv && .venv\Scripts\python.exe evaluate_experiment.py --checkpoint experiments/source/convcnp/best.pt --calibration-region target --test-region target --calibration-label oracle_target --device cuda --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output experiments/results/convcnp_oracle_sparse.csv"
+echo Started global, transferred, oracle, and sparse evaluations in separate windows.
