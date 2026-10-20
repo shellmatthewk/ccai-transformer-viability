@@ -151,6 +151,7 @@ activemq-data/
 .env
 .envrc
 .venv
+.solar-venv/
 env/
 venv/
 ENV/
@@ -231,3 +232,83 @@ final_results_*/
 # Generated local metadata
 dataset_stats.json
 experiment_manifest.json
+
+# Original CCAI paper only: ignore new files unless explicitly allowed below.
+# This leaves existing tracked files alone; it does not delete or untrack them.
+# In particular, geographic_transfer_method/, temperature_sensor_calibration/,
+# SINDy/Engression pilots, campaign notes, citation audits, scratch folders,
+# environments, datasets and complete experiment outputs remain local.
+/*
+!/.gitignore
+
+# Paper, experiment documentation and dependency declarations.
+!/Climate_Field_Reconstruction_Under_Station_Sparsity_and_Geographic_Shift_Camera_Ready.pdf
+!/README.md
+!/CUDA.md
+!/DATASET_STATS.md
+!/EXPERIMENTS.md
+!/FINAL_EVALUATION_PROTOCOL.md
+!/FULL_CONTEXT_EXPERIMENTS.md
+!/KRIGING.md
+!/PRECIPITATION_EXPERIMENTS.md
+!/requirements.txt
+!/requirements-figures.txt
+
+# Original root-level training, evaluation, data and table-building modules.
+!/*.py
+
+# Paper models and the compatibility import required by models/__init__.py.
+!/models/
+/models/*
+!/models/__init__.py
+!/models/common.py
+!/models/convcnp.py
+!/models/latent_grid_transformer.py
+!/models/station_transformer.py
+
+# Original experiment launchers, figure exports and data preparation.
+!/scripts/
+/scripts/*
+!/scripts/*.cmd
+!/scripts/download_era5.py
+!/data_pipeline/
+/data_pipeline/*
+!/data_pipeline/temperature_pipeline_windows.ipynb
+!/data_pipeline/precipitation_pipeline_windows.ipynb
+
+# Compact original-paper tables only; later development evidence stays ignored.
+!/paper_results/
+/paper_results/*
+!/paper_results/README.md
+!/paper_results/combined_aggregate_results.csv
+!/paper_results/main_results.csv
+!/paper_results/calibration_results.csv
+!/paper_results/extreme_event_results.csv
+!/paper_results/sparsity_results.csv
+!/paper_results/convcnp_precipitation_seed_diagnostics.csv
+
+# Final figure entry points, their helper and style; not earlier layout variants.
+!/analysis/
+/analysis/*
+!/analysis/neurips.mplstyle
+!/analysis/plot_evaluation_design.py
+!/analysis/plot_geographic_transfer_neurips.py
+!/analysis/plot_station_sparsity_1x4_neurips.py
+!/analysis/plot_station_sparsity_1x4_neurips_final.py
+!/analysis/generated_figures/
+/analysis/generated_figures/*
+!/analysis/generated_figures/evaluation_design.pdf
+!/analysis/generated_figures/evaluation_design.png
+!/analysis/generated_figures/geographic_transfer_seed2026_neurips.pdf
+!/analysis/generated_figures/geographic_transfer_seed2026_neurips.png
+!/analysis/generated_figures/station_sparsity_1x4_neurips.pdf
+!/analysis/generated_figures/station_sparsity_1x4_neurips.png
+
+# Small provenance/daily summaries for the paper's illustrative transfer maps.
+# Point-level Parquet files and other deployment exports remain local.
+!/figure_data/
+/figure_data/*
+!/figure_data/temperature_seed_2026_transfer_retention_1.json
+!/figure_data/temperature_seed_2026_transfer_retention_1.daily.csv
+!/figure_data/precipitation_seed_2026_transfer_retention_1.json
+!/figure_data/precipitation_seed_2026_transfer_retention_1.daily.csv
