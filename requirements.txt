@@ -1,0 +1,9 @@
+cdsapi
+xarray
+netCDF4
+numpy
+scipy
+pandas
+pyarrow
+torch
+tqdm

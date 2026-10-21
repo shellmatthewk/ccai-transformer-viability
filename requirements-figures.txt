@@ -1,0 +1,5 @@
+# Install in the normal project environment, not into the frozen pilot vendor tree.
+-r requirements.txt
+matplotlib
+cartopy
+shapely

@@ -1,0 +1,77 @@
+{
+  "variable": "temperature",
+  "training_seed": 2026,
+  "deployment": "transfer",
+  "training_experiment": "source",
+  "test_region": "target",
+  "retention": 1.0,
+  "evaluation_seed": 9102,
+  "targets_per_day": 1024,
+  "days": 731,
+  "rows": 748544,
+  "date_min": "2020-01-01",
+  "date_max": "2021-12-31",
+  "longitude_cutoff": 15.0,
+  "device": "cuda",
+  "checkpoint_paths": {
+    "convcnp": "experiments_full_context\\source\\convcnp\\best.pt",
+    "latent_transformer": "experiments_full_context\\source\\latent_transformer\\best.pt"
+  },
+  "checkpoint_epochs": {
+    "convcnp": 20,
+    "latent_transformer": 44
+  },
+  "kriging": {
+    "neighbors": 32,
+    "lengthscale_km": 800.0,
+    "nugget_fraction": 0.05
+  },
+  "conformal_q_full_density": {
+    "convcnp": 1.7557861804962158,
+    "latent_transformer": 1.960597276687622,
+    "ordinary_kriging": 1.230486512184143
+  },
+  "event": {
+    "definition": "target-region ERA5 daily spatial-mean anomaly relative to a training-period calendar-day climatology",
+    "reference_period": "2010-01-01 to 2017-12-31",
+    "tail_probability_each_side": 0.05,
+    "low_anomaly_c": -3.4935383396763955,
+    "high_anomaly_c": 3.0283311843872065,
+    "climatology_half_window_days": 15,
+    "target_region": "target",
+    "test_days": 731,
+    "selected_test_days": 104
+  },
+  "primary_precipitation_point_estimate": null,
+  "validation_against_final_results": {
+    "convcnp": {
+      "actual_day_mean_rmse": 3.824098799362391,
+      "expected_day_mean_rmse": 3.82409030468128,
+      "rmse_absolute_difference": 8.494681110970959e-06,
+      "actual_day_mean_coverage90": 0.6487875128248974,
+      "expected_day_mean_coverage90": 0.6487821691176471,
+      "coverage_absolute_difference": 5.343707250360374e-06,
+      "passed": true
+    },
+    "latent_transformer": {
+      "actual_day_mean_rmse": 4.661165305592945,
+      "expected_day_mean_rmse": 4.661165305592945,
+      "rmse_absolute_difference": 0.0,
+      "actual_day_mean_coverage90": 0.38926235465116277,
+      "expected_day_mean_coverage90": 0.3892623546511627,
+      "coverage_absolute_difference": 5.551115123125783e-17,
+      "passed": true
+    },
+    "ordinary_kriging": {
+      "actual_day_mean_rmse": 2.2356795788463586,
+      "expected_day_mean_rmse": 2.2356795788463586,
+      "rmse_absolute_difference": 0.0,
+      "actual_day_mean_coverage90": 0.8702521161080712,
+      "expected_day_mean_coverage90": 0.8702507801812586,
+      "coverage_absolute_difference": 1.3359268126178492e-06,
+      "passed": true
+    }
+  },
+  "parquet": "figure_data\\temperature_seed_2026_transfer_retention_1.parquet",
+  "daily_metrics_csv": "figure_data\\temperature_seed_2026_transfer_retention_1.daily.csv"
+}

@@ -1,0 +1,6 @@
+@echo off
+cd /d "%~dp0.."
+if not exist "final_results\kriging" mkdir "final_results\kriging"
+start "Full-network Local Ordinary Kriging - CPU" cmd /k ".venv\Scripts\python.exe evaluate_local_kriging.py --experiment global --calibration-region global --test-region global --calibration-label global --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output final_results/kriging/ordinary_kriging_global.csv && .venv\Scripts\python.exe evaluate_local_kriging.py --experiment source --calibration-region source --test-region target --calibration-label transferred --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output final_results/kriging/ordinary_kriging_transfer.csv && .venv\Scripts\python.exe evaluate_local_kriging.py --experiment source --calibration-region target --test-region target --calibration-label oracle_target --stations data/tg/daily_temperature_2010_2021.parquet --era5 data/era5_daily_t2m_2010_2021.nc --output final_results/kriging/ordinary_kriging_oracle.csv"
+echo Started sequential CPU kriging evaluations.
+
